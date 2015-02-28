@@ -24,7 +24,7 @@ This script creates a simple folder structure like this in your IMAP email box:
 ndayslater/day01/ # --> first day of a month
 ndayslater/day02/
 ...
-ndayslater/day31/
+ndayslater/day31/ # --> for January, March, May, July, August, October, and December 
 ```
 If today is the first march, and you want to handle not today, but maybe in three days. Move the mail with our favorite mail user agent (thunderbird, outlook, k9 for android, ...) to ndayslater/day04/.
 
