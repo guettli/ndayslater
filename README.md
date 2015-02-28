@@ -26,11 +26,13 @@ ndayslater/day02/
 ...
 ndayslater/day31/ # --> only for January, March, May, July, August, October and December 
 ```
-If today is the first march, and you want to handle not today, but maybe in three days. Move the mail with our favorite mail user agent (thunderbird, outlook, k9 for android, ...) to ndayslater/day04/.
+If today is the first march, and you want to handle a mail not today, but maybe in three days. Move the mail with our favorite mail user agent (thunderbird, outlook, k9 for android, ...) to the folder `ndayslater/day04/`.
 
-On 4th march the script moves all mails in the folder ndayslater/day04/ to your inbox again.
+On 4th march the script moves all mails in the folder `ndayslater/day04/` to your inbox again.
 
 This way you can schedule mails for resubmission for about one month.
+
+Related: http://en.wikipedia.org/wiki/Tickler_file also known as 43Folders
 
 If you use the mail user agent thunderbird, then the following plugins are handy:
 
