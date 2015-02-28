@@ -20,10 +20,13 @@ class NDaysLaterIMAPClient(imapclient.IMAPClient):
         self.args=args
         super(NDaysLaterIMAPClient, self).__init__(args.host, use_uid=True, ssl=True)
 
+    def get_day_folder(self, day_as_int):
+        return '%s/d%02d' % (self.args.name_of_base_folder, day_as_int)
+
     def create_days_folders(self):
         self.get_or_create_folder(self.args.name_of_base_folder)
-        for day_number in range(1, 32):
-            self.get_or_create_folder('%s/%s' % (self.args.name_of_base_folder, day_number))
+        for day_as_int in range(1, 32):
+            self.get_or_create_folder(self.get_day_folder(day_as_int))
         self.get_or_create_folder(self.args.name_of_base_folder)
 
     def get_or_create_folder(self, folder_name):
@@ -38,8 +41,7 @@ class NDaysLaterIMAPClient(imapclient.IMAPClient):
         return self.move_date_to_inbox(today)
 
     def move_date_to_inbox(self, date):
-        folder='%s/%s' % (self.args.name_of_base_folder, date.day)
-        self.get_or_create_folder(folder)
+        self.get_or_create_folder(self.get_day_folder(date.day))
         self.move(self.search(['NOT DELETED']), self.INBOX)
 
     def move(self, messages, folder):
@@ -50,5 +52,5 @@ class NDaysLaterIMAPClient(imapclient.IMAPClient):
 def run(args):
     server = NDaysLaterIMAPClient(args)
     server.login(args.user, args.password)
-    #server.create_days_folders()
+    server.create_days_folders()
     server.move_today_to_inbox()
