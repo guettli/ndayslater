@@ -47,6 +47,7 @@ user = foouser
 password = 12345
 ```
 
+# Running it daily
 Use cron or a different sheduler to run the command at least once a day:
 
 ```
@@ -54,6 +55,7 @@ user@host> crontab -e
 
 @daily ndayslater
 ```
+# Misc
 
 Related: http://en.wikipedia.org/wiki/Tickler_file also known as 43Folders
 
