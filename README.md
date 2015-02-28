@@ -55,6 +55,16 @@ user@host> crontab -e
 
 @daily ndayslater
 ```
+
+# Limitations
+
+Up to now, you can only move a message 31 days ahead. You can't schedule the mails to a month.
+
+But forking this project is allowed and encouraged! Go ahead, improve it!
+
+Tell me what you want to be improved. Please create an issue and explain what you think.
+
+
 # Misc
 
 Related: http://en.wikipedia.org/wiki/Tickler_file also known as 43Folders
