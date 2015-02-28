@@ -32,6 +32,29 @@ On 4th march the script moves all mails in the folder `ndayslater/day04/` to you
 
 This way you can schedule mails for resubmission for about one month.
 
+#Install
+
+```
+ pip install git+https://github.com/guettli/ndayslater.git#egg=ndayslater
+```
+ 
+#Configuration
+
+```
+# .config/ndayslater/ndayslater.conf
+host = example.com
+user = foouser
+password = 12345
+```
+
+Use cron or a different sheduler to run the command at least once a day:
+
+```
+user@host> crontab -e
+
+@daily ndayslater
+```
+
 Related: http://en.wikipedia.org/wiki/Tickler_file also known as 43Folders
 
 If you use the mail user agent thunderbird, then the following plugins are handy:
