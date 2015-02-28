@@ -41,7 +41,7 @@ This way you can schedule mails for resubmission for about one month.
 #Configuration
 
 ```
-# .config/ndayslater/ndayslater.conf
+# ~/.config/ndayslater/ndayslater.conf
 host = example.com
 user = foouser
 password = 12345
