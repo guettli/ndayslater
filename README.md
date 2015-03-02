@@ -1,5 +1,5 @@
 # ndayslater
-Shedule mails for resubmission N days later
+Schedule mails for resubmission N days later
 
 you have two choices if you read an email:
 
