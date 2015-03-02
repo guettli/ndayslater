@@ -56,6 +56,11 @@ user@host> crontab -e
 @daily ndayslater
 ```
 
+# What ndayslater is not
+
+It is not calender application. It is not intended for fixed dates like "On day X, Meeting with person Y in location Z". The ndayslater tools is intended for things you want to do, but it does not matter if you do it later.
+
+
 # Limitations
 
 Up to now, you can only move a message 31 days ahead. You can't schedule the mails to a month.
