@@ -16,8 +16,6 @@ Delay them, schedule them for resubmission N days later!
 
 Keep your inbox clean: empty it daily.
 
-No problem if something was not done today: Do it N days later :-)
-
 This script creates a simple folder structure like this in your IMAP email box:
 
 ```
