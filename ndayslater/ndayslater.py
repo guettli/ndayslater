@@ -34,10 +34,12 @@ def main():
 
 class LastRun(object):
 
+    mail_rfc822=None
     datetime_of_last_run=None
     attributes=set(['datetime_of_last_run'])
 
     def __init__(self, mail_rfc822):
+        self.mail_rfc822=mail_rfc822
         msg = email.message_from_string(mail_rfc822)
         for part in msg.walk():
             payload=part.get_payload(decode=True)
@@ -46,6 +48,15 @@ class LastRun(object):
             break
         if not self.datetime_of_last_run:
             raise ValueError('failed to initialize LastRun')
+
+    def __unicode__(self):
+        return '<%s %s>' % (self.__class__.__name__, self.datetime_of_last_run)
+
+    def __repr__(self):
+        return unicode(self).encode('ascii')
+
+    def as_string(self):
+        return self.mail_rfc822
 
     def load_data(self, data):
         seen=set()
@@ -62,12 +73,20 @@ class LastRun(object):
     def create_from_msg_id(cls, server, msgid):
         folder=server.args.name_of_base_folder
         server.select_folder(folder)
-        mail_rfc822=server.fetch([msgid], ['RFC822'])
-        return cls(mail_rfc822)
+        mails=server.fetch([msgid], ['RFC822'])
+        if len(mails)>1:
+            logger.warn('more than one message found? %s' % mails)
+        mail_rfc822=mails.values()[0]['RFC822']
+        last_run=cls(mail_rfc822)
+        logger.debug('last_run loaded from mail on server: %s' % last_run)
+        return last_run
 
     @classmethod
-    def create_from_scratch(cls, server):
-        msg = MIMEText(json.dumps(dict(datetime_of_last_run=datetime.datetime.now())))
+    def create_from_scratch(cls, server, datetime_of_last_run=None):
+        if not datetime_of_last_run:
+            datetime_of_last_run=datetime.datetime.now()-datetime.timedelta(days=1)
+        msg = MIMEText(json.dumps(dict(datetime_of_last_run=datetime_of_last_run)))
+        msg['subject']=server.subject_of_status_mail
         return cls(msg.as_string())
 
 class NDaysLaterIMAPClient(imapclient.IMAPClient):
@@ -143,6 +162,18 @@ class NDaysLaterIMAPClient(imapclient.IMAPClient):
             return
         return LastRun.create_from_msg_id(self, msg_id)
 
+    def set_last_run(self, now):
+        logger.debug('setting last_run via status mail. Now: %s' % now)
+        self.delete_old_last_status_mail()
+        last_run=LastRun.create_from_scratch(self, now)
+        self.append(self.args.name_of_base_folder, last_run.as_string())
+
+    def delete_old_last_status_mail(self):
+        folder=self.args.name_of_base_folder
+        self.select_folder(folder)
+        self.add_flags(self.search(['SUBJECT %s' % self.subject_of_status_mail]), [imapclient.DELETED])
+        self.expunge()
+
 def run(args):
     server = NDaysLaterIMAPClient(args)
     server.login(args.user, args.password)
@@ -150,19 +181,20 @@ def run(args):
     server.create_days_folders()
     last_run=server.get_last_run()
     now=datetime.datetime.now()
+    yesterday=now-datetime.timedelta(days=1)
     if last_run.datetime_of_last_run.date()>now.date():
         logger.warn('last run in the future? last_run=%s now=%s' % (last_run, now))
-        last_run.datetime_of_last_run=now
+        last_run.datetime_of_last_run=yesterday
     delta_since_last_run = now - last_run.datetime_of_last_run
     if delta_since_last_run > datetime.timedelta(days=31):
         logger.warn('last run is very old. I ignore this old value: last_run=%s now=%s' % (last_run, now))
-        last_run.datetime_of_last_run=now
+        last_run.datetime_of_last_run=yesterday
     day_of_step=last_run.datetime_of_last_run.date()
-    while day_of_step<now.date():
+    while day_of_step<=now.date():
         server.move_date_to_inbox(day_of_step)
         day_of_step=day_of_step+datetime.timedelta(days=1)
 
-    server.move_today_to_inbox()
+    server.set_last_run(now)
     logger.debug('done')
 
 
