@@ -11,16 +11,20 @@ import logging
 logger=logging.getLogger(__name__)
 
 
-
-def main():
+def get_config_parser():
     config_parser = configargparse.ArgParser(default_config_files=['~/.config/ndayslater/ndayslater.conf'])
     config_parser.add('-c', '--my-config', required=False, is_config_file=True, help='config file path')
     config_parser.add('-o', '--host', required=True)
+    config_parser.add('--port', required=False, default=None)
+    config_parser.add('--no-ssl', required=False, default=False, action='store_true')
     config_parser.add('-u', '--user', required=True)
     config_parser.add('-p', '--password', required=True)
     config_parser.add('-v', '--verbose', action='store_true')
     config_parser.add('--name-of-base-folder', default='ndayslater')
+    return config_parser
 
+def main():
+    config_parser=get_config_parser()
     args = config_parser.parse_args()
     if args.verbose:
         loglevel=logging.DEBUG
@@ -95,10 +99,13 @@ class NDaysLaterIMAPClient(imapclient.IMAPClient):
 
     def __init__(self, args):
         self.args=args
-        super(NDaysLaterIMAPClient, self).__init__(args.host, use_uid=True, ssl=True)
+        super(NDaysLaterIMAPClient, self).__init__(args.host, port=args.port, use_uid=True, ssl=not(args.no_ssl))
 
     def get_day_folder(self, day_as_int):
         return '%s/day%02d' % (self.args.name_of_base_folder, day_as_int)
+
+    def get_plus_folder(self, plus_days_as_int):
+        return '%s/plus%02d' % (self.args.name_of_base_folder, plus_days_as_int)
 
     def create_days_folders(self):
         self.get_or_create_folder(self.args.name_of_base_folder)
@@ -110,7 +117,7 @@ class NDaysLaterIMAPClient(imapclient.IMAPClient):
         try:
             return self.select_folder(folder_name)
         except self.Error, exc:
-            logger.debug(('creating folder %s' % folder_name))
+            logger.warn(('creating folder %s' % folder_name))
             self.create_folder(folder_name)
             return self.select_folder(folder_name)
 
@@ -120,8 +127,11 @@ class NDaysLaterIMAPClient(imapclient.IMAPClient):
 
     def move_date_to_inbox(self, date):
         day_folder=self.get_day_folder(date.day)
-        self.get_or_create_folder(day_folder)
-        self.move(self.search(['NOT DELETED']), self.INBOX, day_folder)
+        self.move_mails_of_folder_to_other_folder(day_folder, self.INBOX)
+
+    def move_mails_of_folder_to_other_folder(self, folder_name, other_folder):
+        self.get_or_create_folder(folder_name)
+        self.move(self.search(['NOT DELETED']), other_folder, folder_name)
 
     def move(self, messages, folder, from_message='?'):
         logger.debug('moving %s messages from %s to %s' % (len(messages), from_message, folder))
@@ -134,9 +144,7 @@ class NDaysLaterIMAPClient(imapclient.IMAPClient):
         for flags, delim, folder_name in self.list_folders(self.args.name_of_base_folder):
             if not '/' in folder_name:
                 continue
-            print(folder_name)
             new_name=re.sub(r'/d', '/day', folder_name)
-            #assert 0, new_name
             self.rename_folder(folder_name, new_name)
             self.subscribe_folder(new_name)
 
@@ -174,6 +182,21 @@ class NDaysLaterIMAPClient(imapclient.IMAPClient):
         self.add_flags(self.search(['SUBJECT %s' % self.subject_of_status_mail]), [imapclient.DELETED])
         self.expunge()
 
+def move_mails_from_plus_folders_to_day_foleders(last_run, now, server):
+    for plus_days in range(1, 29):
+        folder_name=server.get_plus_folder(plus_days)
+        server.get_or_create_folder(folder_name)
+        to_datetime=last_run.datetime_of_last_run+datetime.timedelta(days=plus_days)
+        to_folder=server.get_day_folder(to_datetime.day)
+        server.move_mails_of_folder_to_other_folder(folder_name, to_folder)
+
+def move_mails_from_day_folders_to_inbox(last_run, now, server):
+    day_of_step=last_run.datetime_of_last_run.date()
+    while day_of_step<=now.date():
+        server.move_date_to_inbox(day_of_step)
+        day_of_step=day_of_step+datetime.timedelta(days=1)
+
+
 def run(args):
     server = NDaysLaterIMAPClient(args)
     server.login(args.user, args.password)
@@ -189,11 +212,8 @@ def run(args):
     if delta_since_last_run > datetime.timedelta(days=31):
         logger.warn('last run is very old. I ignore this old value: last_run=%s now=%s' % (last_run, now))
         last_run.datetime_of_last_run=yesterday
-    day_of_step=last_run.datetime_of_last_run.date()
-    while day_of_step<=now.date():
-        server.move_date_to_inbox(day_of_step)
-        day_of_step=day_of_step+datetime.timedelta(days=1)
-
+    move_mails_from_plus_folders_to_day_foleders(last_run, now, server)
+    move_mails_from_day_folders_to_inbox(last_run, now, server)
     server.set_last_run(now)
     logger.debug('done')
 
