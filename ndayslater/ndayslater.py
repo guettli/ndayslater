@@ -119,6 +119,7 @@ class NDaysLaterIMAPClient(imapclient.IMAPClient):
         except self.Error, exc:
             logger.warn(('creating folder %s' % folder_name))
             self.create_folder(folder_name)
+            self.subscribe_folder(folder_name)
             return self.select_folder(folder_name)
 
     def move_today_to_inbox(self):
@@ -182,7 +183,7 @@ class NDaysLaterIMAPClient(imapclient.IMAPClient):
         self.add_flags(self.search(['SUBJECT %s' % self.subject_of_status_mail]), [imapclient.DELETED])
         self.expunge()
 
-def move_mails_from_plus_folders_to_day_foleders(last_run, now, server):
+def move_mails_from_plus_folders_to_day_folders(last_run, now, server):
     for plus_days in range(1, 29):
         folder_name=server.get_plus_folder(plus_days)
         server.get_or_create_folder(folder_name)
@@ -212,7 +213,7 @@ def run(args):
     if delta_since_last_run > datetime.timedelta(days=31):
         logger.warn('last run is very old. I ignore this old value: last_run=%s now=%s' % (last_run, now))
         last_run.datetime_of_last_run=yesterday
-    move_mails_from_plus_folders_to_day_foleders(last_run, now, server)
+    move_mails_from_plus_folders_to_day_folders(last_run, now, server)
     move_mails_from_day_folders_to_inbox(last_run, now, server)
     server.set_last_run(now)
     logger.debug('done')
