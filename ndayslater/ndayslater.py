@@ -132,7 +132,7 @@ class NDaysLaterIMAPClient(imapclient.IMAPClient):
 
     def move_mails_of_folder_to_other_folder(self, folder_name, other_folder):
         self.get_or_create_folder(folder_name)
-        self.move(self.search(['NOT DELETED']), other_folder, folder_name)
+        self.move(self.search(['NOT', 'DELETED']), other_folder, folder_name)
 
     def move(self, messages, folder, from_message='?'):
         logger.debug('moving %s messages from %s to %s' % (len(messages), from_message, folder))
@@ -165,7 +165,7 @@ class NDaysLaterIMAPClient(imapclient.IMAPClient):
         folder=self.args.name_of_base_folder
         self.select_folder(folder)
         try:
-            msg_id=self.search(['SUBJECT %s' % self.subject_of_status_mail])[0]
+            msg_id=self.search(['SUBJECT', self.subject_of_status_mail])[0]
         except IndexError:
             logger.info('No mail with subject %r found. First run?' % self.subject_of_status_mail)
             return
@@ -180,7 +180,7 @@ class NDaysLaterIMAPClient(imapclient.IMAPClient):
     def delete_old_last_status_mail(self):
         folder=self.args.name_of_base_folder
         self.select_folder(folder)
-        self.add_flags(self.search(['SUBJECT %s' % self.subject_of_status_mail]), [imapclient.DELETED])
+        self.add_flags(self.search(['SUBJECT', self.subject_of_status_mail]), [imapclient.DELETED])
         self.expunge()
 
 def move_mails_from_plus_folders_to_day_folders(last_run, now, server):
