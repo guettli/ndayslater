@@ -1,4 +1,7 @@
 # ndayslater
+
+This project is dead. Here is a more detailed documentation of the "n days later method".
+
 Schedule mails for resubmission N days later
 
 you have two choices if you read an email:
