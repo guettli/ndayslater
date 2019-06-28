@@ -1,6 +1,6 @@
 # ndayslater
 
-This project is dead. Here is a more detailed documentation of the "n days later method".
+This project is dead. Here is a more detailed documentation of the "n days later method": https://github.com/guettli/n-days-later-method
 
 Schedule mails for resubmission N days later
 
